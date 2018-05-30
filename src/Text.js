@@ -24,6 +24,8 @@ class Text
         s += `1\n${this.value}\n`;
         s += `10\n${this.x1}\n20\n${this.y1}\n30\n0\n`;
         s += `40\n${this.height}\n50\n${this.rotation}\n`;
+        s += `73\n2\n`;
+        s += `72\n1\n`;
         return s;
     }
 }
