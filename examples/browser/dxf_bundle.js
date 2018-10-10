@@ -1,4 +1,4 @@
-require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+require=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 class Arc
 {
     /**
@@ -57,6 +57,39 @@ class Circle
 
 module.exports = Circle;
 },{}],3:[function(require,module,exports){
+class Face
+{
+    constructor(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4)
+    {
+        this.x1 = x1;
+        this.y1 = y1;
+        this.z1 = z1;
+        this.x2 = x2;
+        this.y2 = y2;
+        this.z2 = z2;
+        this.x3 = x3;
+        this.y3 = y3;
+        this.z3 = z3;
+        this.x4 = x4;
+        this.y4 = y4;
+        this.z4 = z4;
+    }
+
+    toDxfString()
+    {
+        //https://www.autodesk.com/techpubs/autocad/acadr14/dxf/3dface_al_u05_c.htm
+        let s = `0\n3DFACE\n`;
+        s += `8\n${this.layer.name}\n`;
+        s += `10\n${this.x1}\n20\n${this.y1}\n30\n${this.z1}\n`;
+        s += `11\n${this.x2}\n21\n${this.y2}\n31\n${this.z2}\n`;
+        s += `12\n${this.x3}\n22\n${this.y3}\n32\n${this.z3}\n`;
+        s += `13\n${this.x4}\n23\n${this.y4}\n33\n${this.z4}\n`;
+        return s;
+    }
+}
+
+module.exports = Face;
+},{}],4:[function(require,module,exports){
 class Layer
 {
     constructor(name, colorNumber, lineTypeName)
@@ -102,7 +135,7 @@ class Layer
 }
 
 module.exports = Layer;
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 class Line
 {
     constructor(x1, y1, x2, y2)
@@ -125,7 +158,7 @@ class Line
 }
 
 module.exports = Line;
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 class LineType
 {
     /**
@@ -174,7 +207,7 @@ class LineType
 }
 
 module.exports = LineType;
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 class Polyline
 {
     /**
@@ -207,7 +240,7 @@ class Polyline
 }
 
 module.exports = Polyline;
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 class Text
 {
     /**
@@ -234,11 +267,14 @@ class Text
         s += `1\n${this.value}\n`;
         s += `10\n${this.x1}\n20\n${this.y1}\n30\n0\n`;
         s += `40\n${this.height}\n50\n${this.rotation}\n`;
+        s += `73\n2\n`;
+        s += `72\n1\n`;
         return s;
     }
 }
 
 module.exports = Text;
+
 },{}],"Drawing":[function(require,module,exports){
 const LineType = require('./LineType');
 const Layer = require('./Layer');
@@ -247,6 +283,7 @@ const Arc = require('./Arc');
 const Circle = require('./Circle');
 const Text = require('./Text');
 const Polyline = require('./Polyline');
+const Face = require('./Face');
 
 class Drawing
 {
@@ -302,6 +339,15 @@ class Drawing
         this.activeLayer.addShape(new Line(x1, y1, x2, y2));
         return this;
     }
+    
+    drawRect(x1, y1, x2, y2)
+    {
+        this.activeLayer.addShape(new Line(x1, y1, x2, y1));
+        this.activeLayer.addShape(new Line(x1, y2, x2, y2));
+        this.activeLayer.addShape(new Line(x1, y1, x1, y2));
+        this.activeLayer.addShape(new Line(x2, y1, x2, y2));
+        return this;
+    }
 
     /**
      * @param {number} x1 - Center x
@@ -346,6 +392,26 @@ class Drawing
     drawPolyline(points)
     {
         this.activeLayer.addShape(new Polyline(points));
+        return this;
+    }
+
+    /**
+     * @param {number} x1 - x
+     * @param {number} y1 - y
+     * @param {number} z1 - z
+     * @param {number} x2 - x
+     * @param {number} y2 - y
+     * @param {number} z2 - z
+     * @param {number} x3 - x
+     * @param {number} y3 - y
+     * @param {number} z3 - z
+     * @param {number} x4 - x
+     * @param {number} y4 - y
+     * @param {number} z4 - z
+     */
+    drawFace(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4)
+    {
+        this.activeLayer.addShape(new Face(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4));
         return this;
     }
 
@@ -444,4 +510,5 @@ Drawing.LAYERS =
 ]
 
 module.exports = Drawing;
-},{"./Arc":1,"./Circle":2,"./Layer":3,"./Line":4,"./LineType":5,"./Polyline":6,"./Text":7}]},{},[]);
+
+},{"./Arc":1,"./Circle":2,"./Face":3,"./Layer":4,"./Line":5,"./LineType":6,"./Polyline":7,"./Text":8}]},{},[]);
